@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AeroCMD — Ground Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/simulation/style.css?v=4" />
+
+
+</head>
+<body>
+
+<!-- ============ INTRO / BOOT SEQUENCE (hidden — managed by React) ============ -->
+<section id="intro">
+  <canvas id="intro-canvas"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div class="hud-bracket tl"></div>
+  <div class="hud-bracket tr"></div>
+  <div class="hud-bracket bl"></div>
+  <div class="hud-bracket br"></div>
+  <div class="hud-topline">
+    <span>AEROCMD // GROUND OPS TERMINAL</span>
+    <span id="clock">00:00:00Z</span>
+  </div>
+  <div id="boot-readout" class="boot-readout"></div>
+  <div id="loading-wrap" class="loading-wrap">
+    <div class="loading-bar-track">
+      <div id="loading-bar-fill" class="loading-bar-fill"></div>
+    </div>
+    <div class="loading-meta">
+      <span id="loading-status">ESTABLISHING UPLINK…</span>
+      <span id="loading-pct">0%</span>
+    </div>
+  </div>
+  <div id="logo-wrap" class="logo-wrap">
+    <div class="logo-radar">
+      <div class="radar-ring r1"></div>
+      <div class="radar-ring r2"></div>
+      <div class="radar-sweep"></div>
+    </div>
+    <img src="/assets/aerocmd_logo.png" alt="AeroCMD Logo" style="height: 52px; margin-bottom: 24px; z-index: 10; position: relative;" />
+    <p class="tagline">Indira Gandhi International Airport — Operations Control</p>
+    <button id="start-btn" class="start-btn" onclick="if(window.triggerStart) window.triggerStart();">
+      <span class="start-btn-label">INITIATE OPERATIONS</span>
+      <span class="start-btn-arrow">›</span>
+    </button>
+  </div>
+</section>
+
+<!-- ============ MAIN SIMULATION ============ -->
+<section id="sim" style="display: none;">
+
+  <header class="topbar" style="display: none;">
+    <div class="topbar-left">
+      <img src="/assets/aerocmd_logo.png" alt="AeroCMD Logo" style="height: 24px;" />
+      <span class="divider">|</span>
+      <span class="mode-label" id="mode-label">MODE: FREE ORBIT</span>
+    </div>
+    <div class="topbar-right">
+      <span id="sim-clock">00:00:00Z</span>
+    </div>
+  </header>
+
+  <div class="sim-body">
+
+    <!-- Left control rail -->
+    <aside class="rail rail-left" style="display: none;">
+      <div class="rail-title">FLEET</div>
+      <div id="plane-list" class="plane-list"></div>
+
+      <div class="rail-title">SELECTION</div>
+      <div id="selection-info" class="selection-info">NO UNIT SELECTED</div>
+    </aside>
+
+    <!-- Viewport -->
+    <div class="viewport-wrap">
+      <canvas id="sim-canvas"></canvas>
+      <div id="label-layer" class="label-layer"></div>
+
+      <div class="viewport-frame">
+        <div class="vf tl"></div>
+        <div class="vf tr"></div>
+        <div class="vf bl"></div>
+        <div class="vf br"></div>
+      </div>
+
+      <div id="viewport-loading" class="viewport-loading hidden">
+        <div class="vp-bar-track"><div id="vp-bar-fill" class="vp-bar-fill"></div></div>
+        <span id="vp-loading-text">LOADING ASSETS…</span>
+      </div>
+
+      <div id="taxi-hint" class="taxi-hint hidden">
+        USE <b>W A S D</b> OR ARROW KEYS TO TAXI &nbsp;·&nbsp; <b>Q / E</b> TO ROTATE
+      </div>
+
+      <div id="flight-hint" class="taxi-hint hidden">
+        <b>W</b> THROTTLE &nbsp;·&nbsp; <b>A / D</b> TURN &nbsp;·&nbsp; <b>SPACE</b> CLIMB &nbsp;·&nbsp; <b>SHIFT</b> DESCEND
+      </div>
+
+      <div id="fuel-hud" class="fuel-hud hidden">
+        <span class="fuel-label">FUELING — <span id="fuel-target-name">—</span></span>
+        <div class="fuel-bar-track"><div id="fuel-bar-fill" class="fuel-bar-fill"></div></div>
+      </div>
+      <div id="sim-hud-dock" class="sim-hud-dock">
+        <button class="op-btn" id="btn-orbit"><span class="op-icon">⟲</span> ORBIT</button>
+        <button class="op-btn" id="btn-runwaycam"><span class="op-icon">▣</span> RUNWAY</button>
+        <button class="op-btn" id="btn-overview"><span class="op-icon">⛶</span> OVERVIEW</button>
+        <div class="hud-divider"></div>
+        <button class="op-btn" id="btn-move"><span class="op-icon">✈</span> TAXI</button>
+        <button class="op-btn" id="btn-flight"><span class="op-icon">⇧</span> FLIGHT</button>
+        <div class="hud-divider"></div>
+        <button class="op-btn" id="btn-barrier"><span class="op-icon">🚧</span> BARRIER</button>
+        <button class="op-btn" id="btn-clear-barrier"><span class="op-icon">🗑</span> CLEAR</button>
+        <button class="op-btn" id="btn-fuel"><span class="op-icon">⛽</span> FUEL</button>
+        <button class="op-btn" id="btn-pushback"><span class="op-icon">🚜</span> PUSHBACK</button>
+        <div class="hud-divider"></div>
+        <button class="op-btn" id="btn-reset" style="color:var(--orange)"><span class="op-icon">⟲</span> RESET</button>
+        <div class="hud-divider"></div>
+        <div class="hud-help-wrap">
+          <button class="hud-help-btn" id="btn-help" title="Controls Guide">?</button>
+          <div class="hud-help-panel" id="help-panel">
+            <div class="help-title">✦ HOW TO USE</div>
+            <div class="help-rule"><span class="help-key">ORBIT</span> Drag to rotate · Scroll to zoom</div>
+            <div class="help-rule"><span class="help-key">OVERVIEW</span> Fly to top-down view</div>
+            <div class="help-rule"><span class="help-key">RUNWAY CAM</span> Track selected plane</div>
+            <div class="help-sep"></div>
+            <div class="help-rule"><span class="help-key">TAXI →</span> Click plane → W/S move · Q/E rotate</div>
+            <div class="help-rule"><span class="help-key">FLIGHT →</span> Click plane → W throttle · Space climb</div>
+            <div class="help-rule"><span class="help-key">FUEL →</span> Click to dispatch fuel truck to selected plane</div>
+            <div class="help-rule"><span class="help-key">PUSHBACK →</span> Click to push selected plane back from gate</div>
+            <div class="help-rule"><span class="help-key">BARRIER →</span> Click apron to place traffic cone</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right rail removed for unobstructed view -->
+
+
+  </div>
+</section>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="/simulation/main.js?v=3"></script>
+</body>
+</html>
